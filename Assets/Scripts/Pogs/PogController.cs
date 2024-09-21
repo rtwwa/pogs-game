@@ -3,36 +3,19 @@ using UnityEngine;
 public class PogController : MonoBehaviour
 {
     private RandomMovement randomMovement;
-    private ApplyForce applyForceScript;
-    private Rigidbody rb;
-    private LoadStartPosition loadStartPosition;
 
-    private float currentSpeed = 7.0f;
+
+    private static float initialSpeed = 5.0f;
+    private float currentSpeed = initialSpeed;
     private float acceleration = 5.0f;
     private float maxSpeed = 15.0f;
 
+    // Точка соприкосновения фишек со столом
+    public const float HEIGHT_OF_CONTACT = 0.1f;
+
     void Start()
     {
-        randomMovement = GetComponent<RandomMovement>();
-        if (randomMovement == null)
-        {
-            randomMovement = gameObject.AddComponent<RandomMovement>();
-            Debug.Log("RandomMovement добавлен автоматически.");
-        }
-
-        applyForceScript = GetComponent<ApplyForce>();
-        if (applyForceScript == null)
-        {
-            applyForceScript = gameObject.AddComponent<ApplyForce>();
-            Debug.Log("ApplyForce добавлен автоматически.");
-        }
-
-        loadStartPosition = GetComponent<LoadStartPosition>();
-        if (loadStartPosition == null)
-        {
-            loadStartPosition = gameObject.AddComponent<LoadStartPosition>();
-            Debug.Log("LoadStartPosition добавлен автоматически.");
-        }
+        randomMovement = gameObject.AddComponent<RandomMovement>();
 
         if (randomMovement != null)
         {
@@ -42,21 +25,19 @@ public class PogController : MonoBehaviour
         {
             Debug.LogError("Компонент RandomMovement не найден!");
         }
-
-        if (applyForceScript == null)
-        {
-            Debug.LogError("Компонент ApplyForce не найден!");
-        }
     }
 
     void Update()
     {
-        if (transform.position.y <= 0.1f)
+        // При пересечении точки соприкосновения + небольшое число т.к там задержка
+        if (transform.position.y <= HEIGHT_OF_CONTACT)
         {
-            currentSpeed = 5.0f;
+            // Сброс скорости к стандартной
+            currentSpeed = initialSpeed;
             return;
         }
 
+        // Ускорение и отрисовка этого ускорения
         currentSpeed += acceleration * Time.deltaTime;
 
         currentSpeed = Mathf.Clamp(currentSpeed, 0.0f, maxSpeed);

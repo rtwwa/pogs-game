@@ -205,8 +205,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 654012869}
-        m_TargetAssemblyTypeName: LoadStartPosition, Assembly-CSharp
+      - m_Target: {fileID: 654012867}
+        m_TargetAssemblyTypeName: SpawnPogs, Assembly-CSharp
         m_MethodName: OnButtonClick
         m_Mode: 1
         m_Arguments:
@@ -637,7 +637,6 @@ GameObject:
   m_Component:
   - component: {fileID: 654012868}
   - component: {fileID: 654012867}
-  - component: {fileID: 654012869}
   m_Layer: 0
   m_Name: SpawnPogs
   m_TagString: Untagged
@@ -657,13 +656,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed93ce6ec40ca4a459decaa0744dc0ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelPrefab: {fileID: 919132149155446097, guid: 32198ab200690d7429c1d5edbed6257c,
-    type: 3}
-  numberOfModels: 16
+  numberOfModels: 8
   startPosition: {x: 0, y: 1, z: 0}
   heightIncrement: 0.04
-  texturePath: Pogs/Bulbasaur
-  materialPath: Pogs/BulbasaurSides
+  cooldownDuration: 2.8
 --- !u!4 &654012868
 Transform:
   m_ObjectHideFlags: 0
@@ -679,20 +675,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &654012869
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 654012866}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f42d8133325bbc4ba0e3923fcf96f2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cooldownDuration: 2
-  randomMovementOnReload: 0
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
