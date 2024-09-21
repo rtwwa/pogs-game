@@ -2,53 +2,65 @@ using UnityEngine;
 
 public class PogController : MonoBehaviour
 {
-    [SerializeField]
     private RandomMovement randomMovement;
-
-    [SerializeField]
     private ApplyForce applyForceScript;
-
-    private CameraShake cameraShake;
-
     private Rigidbody rb;
+    private LoadStartPosition loadStartPosition;
+
+    private float currentSpeed = 7.0f;
+    private float acceleration = 5.0f;
+    private float maxSpeed = 15.0f;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null)
+        randomMovement = GetComponent<RandomMovement>();
+        if (randomMovement == null)
         {
-            cameraShake = mainCamera.GetComponent<CameraShake>();
+            randomMovement = gameObject.AddComponent<RandomMovement>();
+            Debug.Log("RandomMovement добавлен автоматически.");
+        }
+
+        applyForceScript = GetComponent<ApplyForce>();
+        if (applyForceScript == null)
+        {
+            applyForceScript = gameObject.AddComponent<ApplyForce>();
+            Debug.Log("ApplyForce добавлен автоматически.");
+        }
+
+        loadStartPosition = GetComponent<LoadStartPosition>();
+        if (loadStartPosition == null)
+        {
+            loadStartPosition = gameObject.AddComponent<LoadStartPosition>();
+            Debug.Log("LoadStartPosition добавлен автоматически.");
         }
 
         if (randomMovement != null)
         {
             randomMovement.ApplyRandomMove();
-            randomMovement.ApplyRandomRotation();
-
-            if (cameraShake != null)
-            {
-                cameraShake.StartShake();
-            }
         }
         else
         {
-            Debug.LogError("Объект randomMovement не присвоен!");
+            Debug.LogError("Компонент RandomMovement не найден!");
         }
 
         if (applyForceScript == null)
         {
-            Debug.LogError("Скрипт ApplyForce не присвоен!");
+            Debug.LogError("Компонент ApplyForce не найден!");
         }
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        if (applyForceScript != null)
+        if (transform.position.y <= 0.1f)
         {
-            applyForceScript.ApplyForceToRigidBody(rb);
+            currentSpeed = 5.0f;
+            return;
         }
-    }
 
+        currentSpeed += acceleration * Time.deltaTime;
+
+        currentSpeed = Mathf.Clamp(currentSpeed, 0.0f, maxSpeed);
+
+        transform.Translate(Vector3.down * currentSpeed * Time.deltaTime);
+    }
 }

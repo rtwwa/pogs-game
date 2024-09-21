@@ -7,17 +7,14 @@ public class LoadStartPosition : MonoBehaviour
     private Quaternion startRotation;
 
     [SerializeField]
-    private float cooldownDuration = 2.0f;
+    private float cooldownDuration = 1.0f;
     private bool isOnCooldown = false;
     private float cooldownTimer = 0f;
 
     [SerializeField]
     bool randomMovementOnReload;
 
-    [SerializeField]
     private RandomMovement randomMovement;
-
-    private CameraShake cameraShake;
 
     void Start()
     {
@@ -28,13 +25,11 @@ public class LoadStartPosition : MonoBehaviour
 
         if (randomMovementOnReload && randomMovement == null)
         {
-            Debug.LogError("Объект randomMovement не присвоен!");
-        }
-
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null)
-        {
-            cameraShake = mainCamera.GetComponent<CameraShake>();
+            randomMovement = GetComponent<RandomMovement>();
+            if (randomMovement == null)
+            {
+                Debug.LogError("Объект randomMovement не найден на этом объекте!");
+            }
         }
     }
 
@@ -52,25 +47,50 @@ public class LoadStartPosition : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space) && !isOnCooldown)
         {
-            if (cameraShake != null)
-            {
-                cameraShake.StartShake();
-            }
-
-            if (!randomMovementOnReload)
-            {
-                transform.position = startPosition;
-                transform.rotation = startRotation;
-            }
-            else
-            {
-                randomMovement.ApplyRandomRotation();
-                randomMovement.ApplyRandomMove();
-            }
-
-            StartCooldown();
+            ResetOrMove();
         }
     }
+
+    public void OnButtonClick()
+    {
+        if (isOnCooldown)
+        {
+            cooldownTimer -= Time.deltaTime;
+
+            if (cooldownTimer <= 0f)
+            {
+                isOnCooldown = false;
+            }
+        }
+
+        if (!isOnCooldown)
+        {
+            Debug.Log("Drop");
+            ResetOrMove();
+        }
+    }
+
+    void ResetOrMove()
+    {
+        Debug.Log($"Object Name: {gameObject.name}");
+        GameObject currentObject = this.gameObject;
+        if (!randomMovementOnReload)
+        {
+            transform.position = startPosition;
+            transform.rotation = startRotation;
+        }
+        else
+        {
+            randomMovement.ApplyRandomRotation();
+            randomMovement.ApplyRandomMove();
+        }
+
+        StartCooldown();
+    }
+
+
+
+
 
     void StartCooldown()
     {

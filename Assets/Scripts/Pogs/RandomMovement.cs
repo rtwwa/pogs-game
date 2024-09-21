@@ -7,7 +7,7 @@ public class RandomMovement : MonoBehaviour
     [SerializeField]
     private float maxRotationAngle = 8.0f;
     [SerializeField]
-    private float moveAmount = 0.1f;
+    private float moveAmount = 0.02f;
     public void ApplyRandomRotation()
     {
         float randomX = Random.Range(-maxRotationAngle, maxRotationAngle);
