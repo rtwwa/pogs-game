@@ -56,8 +56,8 @@ public class ExplosionTrigger : MonoBehaviour
     {
         if (explosionPrefab != null && transform.position.y < 0.1f && !explosionTriggered)
         {
-            Vector3 vector3 = new Vector3(transform.position.x, transform.position.y + 0.25f, transform.position.z);
-            Instantiate(explosionPrefab, transform.position, transform.rotation);
+            Vector3 vector3 = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
+            Instantiate(explosionPrefab, transform.position, Quaternion.identity);
 
             PlaySoundAllDrop();
 

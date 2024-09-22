@@ -146,6 +146,8 @@ public class SpawnPogs : MonoBehaviour
                 explosionTrigger.SetSpawnedModels(spawnedModels);
             }
         }
+
+        StartCooldown();
     }
 
     public void OnButtonClick()
