@@ -4,15 +4,17 @@ using UnityEngine;
 
 public class ExplosionTrigger : MonoBehaviour
 {
-    private string prefabPath = "VFX/Explosion1";
+    private string prefabPath = "VFX/Explosion";
     private GameObject explosionPrefab;
     private bool explosionTriggered = false;
 
     private List<GameObject> spawnedModels;
+    private List<GameObject> flippedCaps;
+    private System.Action<GameObject> OnComplete;
 
-    [SerializeField] private float maxWidth = 1f;
+    [SerializeField] private float maxWidth = 0.7f;
     [SerializeField] private float maxHeight = 0.5f;
-    [SerializeField] private float maxLength = 1f;
+    [SerializeField] private float maxLength = 0.7f;
 
     private float circleRadius = Cap.CAP_DIAMETER;
 
@@ -26,6 +28,8 @@ public class ExplosionTrigger : MonoBehaviour
 
     void Start()
     {
+        OnComplete += print;
+
         explosionPrefab = Resources.Load<GameObject>(prefabPath);
 
         audioSource = GetComponent<AudioSource>();
@@ -98,7 +102,19 @@ public class ExplosionTrigger : MonoBehaviour
 
     void ScatterObjects()
     {
+        if (Session.Instance.isPlayerTurn)
+        {
+            OnComplete += Player.Instance.MoveReceivedCaps;
+            OnComplete -= Bot.Instance.MoveReceivedCaps;
+        }
+        else
+        {
+            OnComplete += Bot.Instance.MoveReceivedCaps;
+            OnComplete -= Player.Instance.MoveReceivedCaps;
+        }
+
         List<Vector3> newPositions = new List<Vector3>();
+        flippedCaps = new List<GameObject>();
 
         foreach (GameObject pog in spawnedModels)
         {
@@ -120,6 +136,7 @@ public class ExplosionTrigger : MonoBehaviour
 
     IEnumerator MoveToPosition(GameObject pog, Vector3 targetPosition)
     {
+
         Vector3 startPosition = pog.transform.position;
         float elapsedTime = 0f;
 
@@ -130,6 +147,9 @@ public class ExplosionTrigger : MonoBehaviour
 
         if (shouldFlip)
         {
+            Destroy(pog.GetComponent<PogController>());
+            spawnedModels.Remove(pog);
+            flippedCaps.Add(pog);
             pog.GetComponent<Cap>().Flipped();
         }
 
@@ -165,12 +185,10 @@ public class ExplosionTrigger : MonoBehaviour
 
         PlaySoundSoloDrop();
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
 
-        if (pog.GetComponent<Cap>().IsFlipped())
-        {
-            StartCoroutine(FadeOut(pog));
-        }
+        if (shouldFlip)
+            OnComplete?.Invoke(pog);
     }
 
     Vector3 GetRandomPosition()
@@ -218,7 +236,21 @@ public class ExplosionTrigger : MonoBehaviour
         spawnedModels = models;
     }
 
-    // Перенести в другой класс???
+    public void SetFlippedCaps(List<GameObject> caps)
+    {
+        flippedCaps = caps;
+    }
+
+    public void print()
+    {
+        Debug.Log("Flipped Caps Count: " + flippedCaps.Count);
+        foreach (GameObject cap in flippedCaps)
+        {
+            Debug.Log("Flipped Cap: " + cap.name);
+        }
+    }
+
+    //// Перенести в другой класс???
     IEnumerator FadeOut(GameObject pog)
     {
         Renderer renderer = pog.GetComponent<Renderer>();
@@ -260,6 +292,4 @@ public class ExplosionTrigger : MonoBehaviour
         // Деактивируем объект
         pog.SetActive(false);
     }
-
-
 }

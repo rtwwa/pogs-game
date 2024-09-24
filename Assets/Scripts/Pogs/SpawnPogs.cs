@@ -4,16 +4,40 @@ using UnityEngine;
 
 public class SpawnPogs : MonoBehaviour
 {
+    public static SpawnPogs Instance { get; private set; }
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // Если нужно сохранить объект при загрузке новой сцены
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
     [SerializeField] private int numberOfModels = 8;
     [SerializeField] private Vector3 startPosition = new Vector3(0, 1.5f, 0);
     [SerializeField] private float heightIncrement = 0.04f;
 
     [SerializeField]
-    private float cooldownDuration = 2.5f;
+    public float cooldownDuration { get; } = 2.5f;
     private bool isOnCooldown = false;
     private float cooldownTimer = 0f;
 
-    private List<GameObject> spawnedModels = new List<GameObject>();
+    // Функция вызываемая после MakeMove()
+    public event System.Action OnMoveCompleted;
+
+    public List<GameObject> spawnedModels { get; set; } = new List<GameObject>();
+    public List<GameObject> flippedCaps { get; } = new List<GameObject>();
+
+    void Start()
+    {
+        Spawn();
+    }
 
     void Update()
     {
@@ -29,15 +53,35 @@ public class SpawnPogs : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space) && !isOnCooldown)
         {
-            TransformToStartPosition();
+            MakeMove();
         }
     }
 
-    void Start()
+    public bool MakeMove()
     {
-        Spawn();
-    }
+        if (isOnCooldown)
+        {
+            cooldownTimer -= Time.deltaTime;
 
+            if (cooldownTimer <= 0f)
+            {
+                isOnCooldown = false;
+            }
+
+            return false;
+        }
+
+        if (!isOnCooldown)
+        {
+            TransformToStartPosition();
+        }
+
+        OnMoveCompleted?.Invoke();
+
+
+        return true;
+    }
+    
     void TransformToStartPosition()
     {
         for (int i = 0; i < spawnedModels.Count; i++)
@@ -139,12 +183,6 @@ public class SpawnPogs : MonoBehaviour
             spawnedModel.AddComponent<PogController>();
 
             spawnedModels.Add(spawnedModel);
-
-            if (i == numberOfModels - 1)
-            {
-                ExplosionTrigger explosionTrigger = spawnedModels[spawnedModels.Count - 1].AddComponent<ExplosionTrigger>();
-                explosionTrigger.SetSpawnedModels(spawnedModels);
-            }
         }
 
         StartCooldown();
@@ -152,21 +190,7 @@ public class SpawnPogs : MonoBehaviour
 
     public void OnButtonClick()
     {
-        if (isOnCooldown)
-        {
-            cooldownTimer -= Time.deltaTime;
-
-            if (cooldownTimer <= 0f)
-            {
-                isOnCooldown = false;
-            }
-        }
-
-        if (!isOnCooldown)
-        {
-            Debug.Log("Drop");
-            TransformToStartPosition();
-        }
+        MakeMove();
     }
 
     void StartCooldown()

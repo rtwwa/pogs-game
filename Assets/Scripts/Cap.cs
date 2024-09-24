@@ -12,7 +12,6 @@ public class Cap : MonoBehaviour
     public const float CAP_DIAMETER = 0.4f;
 
     private string texturePath;
-    private string materialPath;
 
     private Vector3 startPosition;
 
@@ -50,46 +49,40 @@ public class Cap : MonoBehaviour
         // Находим компонент MeshRenderer у объекта фишки
         meshRenderer = GetComponent<MeshRenderer>();
 
+        MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
+
+        meshRenderer.SetPropertyBlock(materialPropertyBlock);
+
         if (meshRenderer == null)
         {
             Debug.LogError("MeshRenderer не найден на объекте фишки!");
             return;
         }
 
-        // Путь к текстурам на основе имени
         texturePath = "Pogs/Materials/" + capName;
-        materialPath = "Pogs/" + capName + "Sides";
 
         // Пробуем установить текстуру и материал при инициализации
-        bool success = SetTextureAndMaterial(texturePath, materialPath);
+        bool success = SetTextureAndMaterial(texturePath);
         if (!success)
         {
             Debug.LogError("Ошибка при загрузке текстуры или материала.");
         }
     }
 
-    bool SetTextureAndMaterial(string texturePath, string materialPath)
+    bool SetTextureAndMaterial(string texturePath)
     {
         // Загружаем текстуру и материал по динамически созданному пути
         Material textureMaterial = Resources.Load<Material>(texturePath);
-        Material predefinedMaterial = Resources.Load<Material>(materialPath);
 
         // Проверяем, были ли успешно загружены ресурсы
-        if (textureMaterial == null || predefinedMaterial == null)
+        if (textureMaterial == null)
         {
-            Debug.LogError("Текстура или материал не найдены по пути: " + texturePath + " или " + materialPath);
+            Debug.LogError("Текстура не найдена по пути: " + texturePath);
             return false;
         }
 
-        // Создаём массив для двух материалов
-        Material[] materials = new Material[2];
-
-        // Устанавливаем материалы в массив
-        materials[0] = predefinedMaterial; // первый материал
-        materials[1] = textureMaterial;    // второй материал
-
         // Применяем материалы к объекту
-        meshRenderer.materials = materials;
+        meshRenderer.material = textureMaterial;
 
         return true;
     }

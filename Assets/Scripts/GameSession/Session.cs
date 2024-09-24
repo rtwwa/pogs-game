@@ -1,15 +1,39 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Session : MonoBehaviour
 {
-    public Player player;
-    public Bot bot;
+    public static Session Instance { get; private set; }
 
-    private bool isPlayerTurn = true;  // Определяет, чей сейчас ход
+    [SerializeField] private Player player;
+    [SerializeField] private Bot bot;
+
+    [SerializeField] private SpawnPogs spawnPogs;
+
+    public bool isPlayerTurn { get; set; } = true;  // Определяет, чей сейчас ход
+
+    private List<Cap> playerCaps;
+    private List<Cap> botCaps;
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // Если нужно сохранить объект при загрузке новой сцены
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Start()
     {
+        // Подписываем событие завершения хода
+        spawnPogs.OnMoveCompleted += EndTurn;
+
         // Начинаем игру с хода игрока
         StartTurn();
     }
@@ -18,12 +42,11 @@ public class Session : MonoBehaviour
     {
         if (isPlayerTurn)
         {
-            // Игрок должен сделать свой ход
             Debug.Log("Player's turn");
+
         }
         else
         {
-            // Ход бота
             StartCoroutine(BotTurn());
         }
     }
@@ -36,15 +59,11 @@ public class Session : MonoBehaviour
 
     IEnumerator BotTurn()
     {
-        Debug.Log("Bot is thinking...");
-
         // Симуляция времени на обдумывание
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(spawnPogs.cooldownDuration + 0.5f);
 
-        // Логика хода бота
-        bot.MakeMove();
+        Debug.Log("Bot Turn");
 
-        // После хода бота передаем ход игроку
-        EndTurn();
+        spawnPogs.MakeMove();
     }
 }
