@@ -4,19 +4,17 @@ using UnityEngine;
 
 public class ExplosionTrigger : MonoBehaviour
 {
-    private string prefabPath = "VFX/Explosion";
+    private readonly string prefabPath = "VFX/Explosion";
     private GameObject explosionPrefab;
     private bool explosionTriggered = false;
 
-    private List<GameObject> spawnedModels;
-    private List<GameObject> flippedCaps;
-    private System.Action<GameObject> OnComplete;
+    public List<GameObject> SpawnedCaps { get; set; }
 
     [SerializeField] private float maxWidth = 0.7f;
     [SerializeField] private float maxHeight = 0.5f;
     [SerializeField] private float maxLength = 0.7f;
 
-    private float circleRadius = Cap.CAP_DIAMETER;
+    private readonly float circleRadius = Cap.CAP_DIAMETER;
 
     [SerializeField] private float minDistanceBetweenObjects;
 
@@ -28,8 +26,6 @@ public class ExplosionTrigger : MonoBehaviour
 
     void Start()
     {
-        OnComplete += print;
-
         explosionPrefab = Resources.Load<GameObject>(prefabPath);
 
         audioSource = GetComponent<AudioSource>();
@@ -60,7 +56,6 @@ public class ExplosionTrigger : MonoBehaviour
     {
         if (explosionPrefab != null && transform.position.y < 0.1f && !explosionTriggered)
         {
-            Vector3 vector3 = new Vector3(transform.position.x, transform.position.y + 1f, transform.position.z);
             Instantiate(explosionPrefab, transform.position, Quaternion.identity);
 
             PlaySoundAllDrop();
@@ -102,21 +97,9 @@ public class ExplosionTrigger : MonoBehaviour
 
     void ScatterObjects()
     {
-        if (Session.Instance.isPlayerTurn)
-        {
-            OnComplete += Player.Instance.MoveReceivedCaps;
-            OnComplete -= Bot.Instance.MoveReceivedCaps;
-        }
-        else
-        {
-            OnComplete += Bot.Instance.MoveReceivedCaps;
-            OnComplete -= Player.Instance.MoveReceivedCaps;
-        }
+        List<Vector3> newPositions = new();
 
-        List<Vector3> newPositions = new List<Vector3>();
-        flippedCaps = new List<GameObject>();
-
-        foreach (GameObject pog in spawnedModels)
+        foreach (GameObject pog in SpawnedCaps)
         {
             Vector3 newPosition = GetRandomPosition();
 
@@ -128,14 +111,25 @@ public class ExplosionTrigger : MonoBehaviour
             newPositions.Add(newPosition);
         }
 
-        for (int i = 0; i < spawnedModels.Count; i++)
+        if (!Session.Instance.IsPlayerTurn)
         {
-            StartCoroutine(MoveToPosition(spawnedModels[i], newPositions[i]));
+            for (int i = 0; i < SpawnedCaps.Count; i++)
+            {
+                StartCoroutine(MoveToPosition(SpawnedCaps[i], newPositions[i], Player.Instance.MoveReceivedCaps));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < SpawnedCaps.Count; i++)
+            {
+                StartCoroutine(MoveToPosition(SpawnedCaps[i], newPositions[i], Bot.Instance.MoveReceivedCaps));
+            }
         }
     }
 
-    IEnumerator MoveToPosition(GameObject pog, Vector3 targetPosition)
+    IEnumerator MoveToPosition(GameObject pog, Vector3 targetPosition, System.Action<GameObject> onComplete)
     {
+        System.Action<GameObject> OnComplete = onComplete;
 
         Vector3 startPosition = pog.transform.position;
         float elapsedTime = 0f;
@@ -148,8 +142,6 @@ public class ExplosionTrigger : MonoBehaviour
         if (shouldFlip)
         {
             Destroy(pog.GetComponent<PogController>());
-            spawnedModels.Remove(pog);
-            flippedCaps.Add(pog);
             pog.GetComponent<Cap>().Flipped();
         }
 
@@ -180,15 +172,17 @@ public class ExplosionTrigger : MonoBehaviour
             yield return null;
         }
 
-        pog.transform.position = targetPosition;
-        pog.transform.rotation = shouldFlip ? endRotation : startRotation;
+        pog.transform.SetPositionAndRotation(targetPosition, shouldFlip ? endRotation : startRotation);
 
         PlaySoundSoloDrop();
 
         yield return new WaitForSeconds(1f);
 
         if (shouldFlip)
+        {
+            SpawnedCaps.Remove(pog);
             OnComplete?.Invoke(pog);
+        }    
     }
 
     Vector3 GetRandomPosition()
@@ -220,7 +214,7 @@ public class ExplosionTrigger : MonoBehaviour
             }
         }
 
-        foreach (GameObject pog in spawnedModels)
+        foreach (GameObject pog in SpawnedCaps)
         {
             if (Vector2.Distance(new Vector2(pog.transform.position.x, pog.transform.position.z), new Vector2(position.x, position.z)) < minDistanceBetweenObjects)
             {
@@ -231,65 +225,46 @@ public class ExplosionTrigger : MonoBehaviour
         return true;
     }
 
-    public void SetSpawnedModels(List<GameObject> models)
-    {
-        spawnedModels = models;
-    }
-
-    public void SetFlippedCaps(List<GameObject> caps)
-    {
-        flippedCaps = caps;
-    }
-
-    public void print()
-    {
-        Debug.Log("Flipped Caps Count: " + flippedCaps.Count);
-        foreach (GameObject cap in flippedCaps)
-        {
-            Debug.Log("Flipped Cap: " + cap.name);
-        }
-    }
-
     //// Перенести в другой класс???
-    IEnumerator FadeOut(GameObject pog)
-    {
-        Renderer renderer = pog.GetComponent<Renderer>();
-        Material[] materials = renderer.materials;  // Получаем массив всех материалов
-        float fadeDuration = 1.0f;  // Длительность исчезновения
-        float elapsedTime = 0f;
+    //IEnumerator FadeOut(GameObject pog)
+    //{
+    //    Renderer renderer = pog.GetComponent<Renderer>();
+    //    Material[] materials = renderer.materials;  // Получаем массив всех материалов
+    //    float fadeDuration = 1.0f;  // Длительность исчезновения
+    //    float elapsedTime = 0f;
 
-        // Сохраняем оригинальные цвета всех материалов
-        List<Color> originalColors = new List<Color>();
-        foreach (Material mat in materials)
-        {
-            originalColors.Add(mat.color);
-        }
+    //    // Сохраняем оригинальные цвета всех материалов
+    //    List<Color> originalColors = new List<Color>();
+    //    foreach (Material mat in materials)
+    //    {
+    //        originalColors.Add(mat.color);
+    //    }
 
-        // Анимация исчезновения
-        while (elapsedTime < fadeDuration)
-        {
-            float t = elapsedTime / fadeDuration;
+    //    // Анимация исчезновения
+    //    while (elapsedTime < fadeDuration)
+    //    {
+    //        float t = elapsedTime / fadeDuration;
 
-            for (int i = 0; i < materials.Length; i++)
-            {
-                Color newColor = originalColors[i];
-                newColor.a = Mathf.Lerp(1, 0, t);  // Уменьшаем альфа-канал для прозрачности
-                materials[i].color = newColor;
-            }
+    //        for (int i = 0; i < materials.Length; i++)
+    //        {
+    //            Color newColor = originalColors[i];
+    //            newColor.a = Mathf.Lerp(1, 0, t);  // Уменьшаем альфа-канал для прозрачности
+    //            materials[i].color = newColor;
+    //        }
 
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
+    //        elapsedTime += Time.deltaTime;
+    //        yield return null;
+    //    }
 
-        // Полностью убираем объект после исчезновения
-        for (int i = 0; i < materials.Length; i++)
-        {
-            Color finalColor = materials[i].color;
-            finalColor.a = 0;
-            materials[i].color = finalColor;
-        }
+    //    // Полностью убираем объект после исчезновения
+    //    for (int i = 0; i < materials.Length; i++)
+    //    {
+    //        Color finalColor = materials[i].color;
+    //        finalColor.a = 0;
+    //        materials[i].color = finalColor;
+    //    }
 
-        // Деактивируем объект
-        pog.SetActive(false);
-    }
+    //    // Деактивируем объект
+    //    pog.SetActive(false);
+    //}
 }

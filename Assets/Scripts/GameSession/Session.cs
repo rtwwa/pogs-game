@@ -9,12 +9,9 @@ public class Session : MonoBehaviour
     [SerializeField] private Player player;
     [SerializeField] private Bot bot;
 
-    [SerializeField] private SpawnPogs spawnPogs;
+    [SerializeField] private CapSpawner CapSpawner;
 
-    public bool isPlayerTurn { get; set; } = true;  // Определяет, чей сейчас ход
-
-    private List<Cap> playerCaps;
-    private List<Cap> botCaps;
+    public bool IsPlayerTurn { get; set; } = true;  // Определяет, чей сейчас ход
 
     void Awake()
     {
@@ -32,7 +29,7 @@ public class Session : MonoBehaviour
     void Start()
     {
         // Подписываем событие завершения хода
-        spawnPogs.OnMoveCompleted += EndTurn;
+        CapMover.Instance.OnMoveCompleted += EndTurn;
 
         // Начинаем игру с хода игрока
         StartTurn();
@@ -40,10 +37,9 @@ public class Session : MonoBehaviour
 
     void StartTurn()
     {
-        if (isPlayerTurn)
+        if (IsPlayerTurn)
         {
             Debug.Log("Player's turn");
-
         }
         else
         {
@@ -53,17 +49,27 @@ public class Session : MonoBehaviour
 
     public void EndTurn()
     {
-        isPlayerTurn = !isPlayerTurn;
+        if (CapSpawner.Instance.SpawnedCaps.Count == 0)
+        {
+            GameEndManager.Instance.EndGame();
+            Player.Instance.DestroyAllCaps();
+            Bot.Instance.DestroyAllCaps();
+            IsPlayerTurn = true;
+            return;
+        }
+
+        IsPlayerTurn = !IsPlayerTurn;
+
         StartTurn();
     }
 
     IEnumerator BotTurn()
     {
         // Симуляция времени на обдумывание
-        yield return new WaitForSeconds(spawnPogs.cooldownDuration + 0.5f);
+        yield return new WaitForSeconds(CapSpawner.Instance.CooldownDuration + 0.5f);
 
         Debug.Log("Bot Turn");
 
-        spawnPogs.MakeMove();
+        CapMover.Instance.MoveCaps();
     }
 }

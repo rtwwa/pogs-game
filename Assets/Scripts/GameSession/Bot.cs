@@ -6,15 +6,14 @@ public class Bot : MonoBehaviour
 {
     public static Bot Instance { get; private set; }
 
-    private List<GameObject> myCaps = new List<GameObject>();
-    private Vector3 startPosition = new Vector3(0.345f, 0.1f, 0.42f);
+    public List<GameObject> MyCaps { get; private set; } = new List<GameObject>();
+    private Vector3 startPosition = new(0.345f, 0.1f, 0.42f);
 
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Если нужно сохранить объект при загрузке новой сцены
         }
         else
         {
@@ -23,22 +22,34 @@ public class Bot : MonoBehaviour
     }
     public void MoveReceivedCaps(GameObject cap)
     {
-        myCaps.Add(cap);
+        MyCaps.Add(cap);
 
-        for (int i = 0; i < myCaps.Count - 1; i++)
+        for (int i = 0; i < MyCaps.Count; i++)
         {
             if (i == 0)
             {
-                myCaps[0].transform.position = startPosition;
+                MyCaps[0].transform.SetPositionAndRotation(startPosition, Quaternion.Euler(0f, 180f, 180f));
             }
             else
             {
-                myCaps[i].transform.position = startPosition + new Vector3(0, 0, 0.1f * i);
-                myCaps[i].transform.rotation = Quaternion.Euler(10f, 0, 0);
+                MyCaps[i].transform.SetPositionAndRotation(startPosition + new Vector3(0, 0, 0.08f * i), Quaternion.Euler(-5f, 180f, 180f));
             }
-
-            // Выводим текущие координаты объекта в консоль
-            Debug.Log("Object " + i + " position: " + myCaps[i].transform.position);
         }
     }
+
+    public void DestroyAllCaps()
+    {
+        // Проходим по всем объектам в списке и удаляем их
+        for (int i = 0; i < MyCaps.Count; i++)
+        {
+            if (MyCaps[i] != null)
+            {
+                Destroy(MyCaps[i]);  // Удаляем объект из сцены
+            }
+        }
+
+        // Очищаем список после удаления объектов
+        MyCaps.Clear();
+    }
+
 }

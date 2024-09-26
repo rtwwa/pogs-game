@@ -1,201 +1,217 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+//using System.Collections;
+//using System.Collections.Generic;
+//using UnityEngine;
+//using UnityEngine.UI;
 
-public class SpawnPogs : MonoBehaviour
-{
-    public static SpawnPogs Instance { get; private set; }
+//public class SpawnPogs : MonoBehaviour
+//{
+//    public static SpawnPogs Instance { get; private set; }
 
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // Если нужно сохранить объект при загрузке новой сцены
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
+//    void Awake()
+//    {
+//        if (Instance == null)
+//        {
+//            Instance = this;
+//            DontDestroyOnLoad(gameObject); // Если нужно сохранить объект при загрузке новой сцены
+//        }
+//        else
+//        {
+//            Destroy(gameObject);
+//        }
+//    }
 
-    [SerializeField] private int numberOfModels = 8;
-    [SerializeField] private Vector3 startPosition = new Vector3(0, 1.5f, 0);
-    [SerializeField] private float heightIncrement = 0.04f;
+//    [SerializeField] private int numberOfModels = 8;
+//    [SerializeField] private Vector3 startPosition = new(0, 1.5f, 0);
+//    [SerializeField] private float heightIncrement = 0.04f;
 
-    [SerializeField]
-    public float cooldownDuration { get; } = 2.5f;
-    private bool isOnCooldown = false;
-    private float cooldownTimer = 0f;
+//    [SerializeField]
+//    public float CooldownDuration { get; } = 2.5f;
+//    private bool isOnCooldown = false;
+//    private float cooldownTimer = 0f;
 
-    // Функция вызываемая после MakeMove()
-    public event System.Action OnMoveCompleted;
+//    public Button myButton;
 
-    public List<GameObject> spawnedModels { get; set; } = new List<GameObject>();
-    public List<GameObject> flippedCaps { get; } = new List<GameObject>();
-
-    void Start()
-    {
-        Spawn();
-    }
-
-    void Update()
-    {
-        if (isOnCooldown)
-        {
-            cooldownTimer -= Time.deltaTime;
-
-            if (cooldownTimer <= 0f)
-            {
-                isOnCooldown = false;
-            }
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space) && !isOnCooldown)
-        {
-            MakeMove();
-        }
-    }
-
-    public bool MakeMove()
-    {
-        if (isOnCooldown)
-        {
-            cooldownTimer -= Time.deltaTime;
-
-            if (cooldownTimer <= 0f)
-            {
-                isOnCooldown = false;
-            }
-
-            return false;
-        }
-
-        if (!isOnCooldown)
-        {
-            TransformToStartPosition();
-        }
-
-        OnMoveCompleted?.Invoke();
+//    // Функция вызываемая после MakeMove()
+//    public event System.Action OnMoveCompleted;
 
 
-        return true;
-    }
+//    public List<GameObject> SpawnedCaps { get; set; } = new List<GameObject>();
+
+//    void Start()
+//    {
+//        Spawn();
+//    }
+
+//    void Update()
+//    {
+//        if (isOnCooldown)
+//        {
+//            cooldownTimer -= Time.deltaTime;
+
+//            if (cooldownTimer <= 0f)
+//            {
+//                isOnCooldown = false;
+//            }
+//        }
+
+//        if (Input.GetKeyDown(KeyCode.Space) && !isOnCooldown)
+//        {
+//            MakeMove();
+//        }
+//    }
+
+//    public bool MakeMove()
+//    {
+//        myButton.interactable = false;
+
+//        if (isOnCooldown)
+//        {
+//            cooldownTimer -= Time.deltaTime;
+
+//            if (cooldownTimer <= 0f)
+//            {
+//                isOnCooldown = false;
+//            }
+
+//            return false;
+//        }
+
+//        if (!isOnCooldown)
+//        {
+//            TransformToStartPosition();
+//        }
+
+//        OnMoveCompleted?.Invoke();
+
+
+//        return true;
+//    }
     
-    void TransformToStartPosition()
-    {
-        for (int i = 0; i < spawnedModels.Count; i++)
-        {
-            GameObject pog = spawnedModels[i];
+//    void TransformToStartPosition()
+//    {
+//        for (int i = 0; i < SpawnedCaps.Count; i++)
+//        {
+//            GameObject pog = SpawnedCaps[i];
 
-            // Размещение фишек по высоте через определенный промежуток
-            Vector3 position = startPosition + new Vector3(0, heightIncrement * i, 0);
-            Quaternion rotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
+//            // Установка позиции на стартовую
+//            pog.transform.position = pog.GetComponent<Cap>().GetStartPosition();
 
-            // Установка позиции на стартовую
-            pog.transform.position = pog.GetComponent<Cap>().GetStartPosition();
+//            // Если это последний элемент списка
+//            if (i == SpawnedCaps.Count - 1)
+//            {
+//                // Попытка найти существующий компонент ExplosionTrigger
+//                ExplosionTrigger explosionTrigger = pog.GetComponent<ExplosionTrigger>();
 
-            // Если это последний элемент списка
-            if (i == spawnedModels.Count - 1)
-            {
-                // Попытка найти существующий компонент ExplosionTrigger
-                ExplosionTrigger explosionTrigger = pog.GetComponent<ExplosionTrigger>();
+//                // Проверка, существует ли компонент и активен ли объект
+//                if (explosionTrigger == null && pog.activeSelf)
+//                {
+//                    // Если компонента нет и объект активен, добавляем новый
+//                    explosionTrigger = pog.AddComponent<ExplosionTrigger>();
+//                    explosionTrigger.SpawnedCaps = SpawnedCaps;
+//                }
+//                else
+//                {
+//                    bool foundActive = false;
 
-                // Проверка, существует ли компонент и активен ли объект
-                if (explosionTrigger == null && pog.activeSelf)
-                {
-                    // Если компонента нет и объект активен, добавляем новый
-                    explosionTrigger = pog.AddComponent<ExplosionTrigger>();
-                    explosionTrigger.SetSpawnedModels(spawnedModels);
-                }
-                else
-                {
-                    bool foundActive = false;
+//                    // Проверка предыдущих объектов в списке
+//                    for (int j = SpawnedCaps.Count - 1; j >= 0; j--)
+//                    {
+//                        if (SpawnedCaps[j].activeSelf)
+//                        {
+//                            explosionTrigger = SpawnedCaps[j].GetComponent<ExplosionTrigger>();
 
-                    // Проверка предыдущих объектов в списке
-                    for (int j = spawnedModels.Count - 1; j >= 0; j--)
-                    {
-                        if (spawnedModels[j].activeSelf)
-                        {
-                            explosionTrigger = spawnedModels[j].GetComponent<ExplosionTrigger>();
+//                            // Проверка, существует ли компонент и активен ли объект
+//                            if (explosionTrigger == null && SpawnedCaps[j].activeSelf)
+//                            {
+//                                explosionTrigger = SpawnedCaps[j].AddComponent<ExplosionTrigger>();
+//                                explosionTrigger.SpawnedCaps = SpawnedCaps;
+//                                foundActive = true;
+//                                break;
+//                            }
 
-                            // Проверка, существует ли компонент и активен ли объект
-                            if (explosionTrigger == null && spawnedModels[j].activeSelf)
-                            {
-                                explosionTrigger = spawnedModels[j].AddComponent<ExplosionTrigger>();
-                                explosionTrigger.SetSpawnedModels(spawnedModels);
-                                foundActive = true;
-                                break;
-                            }
+//                            foundActive = true;
+//                            break;
+//                        }
+//                    }
 
-                            foundActive = true;
-                            break;
-                        }
-                    }
+//                    // Если не нашли активных объектов, можно дополнительно обработать это
+//                    if (!foundActive)
+//                    {
+//                        if (!foundActive)
+//                        {
+//                            StartCoroutine(DestroyAndRespawn());
+//                        }
+//                    }
+//                }
+//            }
 
-                    // Если не нашли активных объектов, можно дополнительно обработать это
-                    if (!foundActive)
-                    {
-                        if (!foundActive)
-                        {
-                            StartCoroutine(DestroyAndRespawn());
-                        }
-                    }
-                }
-            }
 
-            StartCooldown();
-        }
-    }
+//            StartCooldown();
 
-    IEnumerator DestroyAndRespawn()
-    {
-        // Удаляем все объекты в списке
-        for (int j = spawnedModels.Count - 1; j >= 0; j--)
-        {
-            if (spawnedModels[j] != null)
-            {
-                Destroy(spawnedModels[j]);  // Удаление объекта
-            }
-        }
+//            StartCoroutine(EnableButtonAfterCooldown(CooldownDuration));
+//        }
+//    }
 
-        // Очищаем список после удаления
-        spawnedModels.Clear();
+//    IEnumerator DestroyAndRespawn()
+//    {
+//        // Удаляем все объекты в списке
+//        for (int j = SpawnedCaps.Count - 1; j >= 0; j--)
+//        {
+//            if (SpawnedCaps[j] != null)
+//            {
+//                Destroy(SpawnedCaps[j]);  // Удаление объекта
+//            }
+//        }
 
-        // Ждем до конца кадра, чтобы все объекты были корректно уничтожены
-        yield return new WaitForEndOfFrame();
+//        // Очищаем список после удаления
+//        SpawnedCaps.Clear();
 
-        // Вызов метода Spawn для создания новых объектов
-        Spawn();
-    }
+//        // Ждем до конца кадра, чтобы все объекты были корректно уничтожены
+//        yield return new WaitForEndOfFrame();
 
-    void Spawn()
-    {
-        for (int i = 0; i < numberOfModels; i++)
-        {
-            Vector3 position = startPosition + new Vector3(0, heightIncrement * i, 0);
-            // Случайный градус вращения
-            Quaternion rotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
+//        // Вызов метода Spawn для создания новых объектов
+//        Spawn();
+//    }
 
-            // Спавн фишки с именем
-            GameObject spawnedModel = Cap.SpawnCap("Bulbasaur", position, rotation);
+//    void Spawn()
+//    {
+//        myButton.interactable = false;
 
-            spawnedModel.AddComponent<PogController>();
+//        for (int i = 0; i < numberOfModels; i++)
+//        {
+//            Vector3 position = startPosition + new Vector3(0, heightIncrement * i, 0);
+//            // Случайный градус вращения
+//            Quaternion rotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
 
-            spawnedModels.Add(spawnedModel);
-        }
+//            // Спавн фишки с именем
+//            GameObject spawnedModel = Cap.SpawnCap("Bulbasaur", position, rotation);
 
-        StartCooldown();
-    }
+//            spawnedModel.AddComponent<PogController>();
 
-    public void OnButtonClick()
-    {
-        MakeMove();
-    }
+//            SpawnedCaps.Add(spawnedModel);
+//        }
 
-    void StartCooldown()
-    {
-        isOnCooldown = true;
-        cooldownTimer = cooldownDuration;
-    }
-}
+//        StartCooldown();
+//        StartCoroutine(EnableButtonAfterCooldown(CooldownDuration));
+//    }
+
+//    public void OnButtonClick()
+//    {
+//        MakeMove();
+//    }
+
+//    IEnumerator EnableButtonAfterCooldown(float waitTime)
+//    {
+//        // Ждем заданное количество секунд
+//        yield return new WaitForSeconds(waitTime);
+
+//        // Делаем кнопку снова активной
+//        myButton.interactable = true;
+//    }
+
+//    void StartCooldown()
+//    {
+//        isOnCooldown = true;
+//        cooldownTimer = CooldownDuration;
+//    }
+//}
